@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>チェックイン | 復縁サポート</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0D0D0D;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+      min-height: 100vh;
+      padding-bottom: 100px;
+    }
+    .header {
+      background: #1A1A1A;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border-bottom: 1px solid #2A2A2A;
+    }
+    .back-btn { font-size: 20px; cursor: pointer; }
+    .header h1 { font-size: 17px; font-weight: 700; }
+    .content { padding: 24px 20px; max-width: 500px; margin: 0 auto; }
+    .date-label { font-size: 14px; color: #888; margin-bottom: 24px; }
+
+    .score-section { margin-bottom: 32px; }
+    .score-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .score-name { font-size: 16px; font-weight: 700; }
+    .score-desc { font-size: 12px; color: #888; }
+    .score-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: #E8637A;
+      min-width: 32px;
+      text-align: right;
+    }
+    .slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #2A2A2A;
+      outline: none;
+      cursor: pointer;
+    }
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #E8637A;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(232, 99, 122, 0.5);
+    }
+    .scale-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+    }
+    .scale-labels span { font-size: 11px; color: #555; }
+
+    .note-section { margin-bottom: 28px; }
+    .note-label { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .note-sublabel { font-size: 12px; color: #888; margin-bottom: 12px; }
+    textarea {
+      width: 100%;
+      background: #1A1A1A;
+      border: 1px solid #2A2A2A;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 14px;
+      padding: 14px 16px;
+      resize: none;
+      outline: none;
+      line-height: 1.7;
+      font-family: inherit;
+    }
+    textarea:focus { border-color: #E8637A; }
+    textarea::placeholder { color: #555; }
+
+    .btn {
+      width: 100%;
+      padding: 18px;
+      background: #E8637A;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    .done-screen {
+      display: none;
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .done-icon { font-size: 64px; margin-bottom: 20px; }
+    .done-title { font-size: 22px; font-weight: 800; margin-bottom: 10px; }
+    .done-sub { font-size: 14px; color: #888; line-height: 1.7; margin-bottom: 32px; }
+    .done-btn {
+      display: inline-block;
+      padding: 16px 40px;
+      background: #E8637A;
+      color: #fff;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .already-done {
+      background: #1A3A2A;
+      border: 1px solid #4CAF50;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .already-done p { color: #6FCF97; font-size: 14px; }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #1A1A1A;
+      border-top: 1px solid #2A2A2A;
+      display: flex;
+      padding: 10px 0 20px;
+    }
+    .nav-item { flex: 1; text-align: center; padding: 8px; cursor: pointer; color: #555; text-decoration: none; }
+    .nav-item.active { color: #E8637A; }
+    .nav-icon { font-size: 22px; }
+    .nav-label { font-size: 10px; margin-top: 2px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="back-btn" onclick="window.location.href='dashboard.html'">←</span>
+    <h1>今日のチェックイン</h1>
+  </div>
+
+  <div class="content" id="form-content">
+    <p class="date-label" id="date-label"></p>
+
+    <div id="already-done-msg" class="already-done" style="display:none">
+      <p>✅ 今日はすでにチェックイン済みです</p>
+    </div>
+
+    <div class="score-section">
+      <div class="score-label">
+        <div>
+          <div class="score-name">気分</div>
+          <div class="score-desc">今の気持ちはどうですか？</div>
+        </div>
+        <div class="score-value" id="mood-val">3</div>
+      </div>
+      <input type="range" class="slider" id="mood" min="1" max="5" value="3" oninput="updateVal('mood')">
+      <div class="scale-labels"><span>つらい</span><span>普通</span><span>良い</span></div>
+    </div>
+
+    <div class="score-section">
+      <div class="score-label">
+        <div>
+          <div class="score-name">行動</div>
+          <div class="score-desc">今日、自分のために何か行動できましたか？</div>
+        </div>
+        <div class="score-value" id="action-val">3</div>
+      </div>
+      <input type="range" class="slider" id="action" min="1" max="5" value="3" oninput="updateVal('action')">
+      <div class="scale-labels"><span>できなかった</span><span>少しできた</span><span>よくできた</span></div>
+    </div>
+
+    <div class="score-section">
+      <div class="score-label">
+        <div>
+          <div class="score-name">状態</div>
+          <div class="score-desc">前向きな気持ちになれていますか？</div>
+        </div>
+        <div class="score-value" id="state-val">3</div>
+      </div>
+      <input type="range" class="slider" id="state" min="1" max="5" value="3" oninput="updateVal('state')">
+      <div class="scale-labels"><span>後ろ向き</span><span>普通</span><span>前向き</span></div>
+    </div>
+
+    <div class="note-section">
+      <div class="note-label">今日の一言（任意）</div>
+      <div class="note-sublabel">何でも。感情を言葉にするだけでOK</div>
+      <textarea id="note" rows="4" placeholder="例：今日は元彼のことを思い出した。でも講義を見て少し気持ちが楽になった。"></textarea>
+    </div>
+
+    <button class="btn" id="submit-btn" onclick="submitCheckin()">チェックインする</button>
+  </div>
+
+  <div class="done-screen" id="done-screen">
+    <div class="done-icon">🌸</div>
+    <div class="done-title">記録しました</div>
+    <div class="done-sub">今日も一歩前進しました。<br>毎日の積み重ねが、必ず結果につながります。</div>
+    <a class="done-btn" href="dashboard.html">ダッシュボードへ戻る</a>
+  </div>
+
+  <nav class="bottom-nav">
+    <a class="nav-item" href="dashboard.html"><div class="nav-icon">🏠</div><div class="nav-label">ホーム</div></a>
+    <a class="nav-item active" href="checkin.html"><div class="nav-icon">✏️</div><div class="nav-label">チェックイン</div></a>
+    <a class="nav-item" href="lectures.html"><div class="nav-icon">▶️</div><div class="nav-label">講義</div></a>
+  </nav>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    const { createClient } = window.supabase;
+    const sb = createClient(
+      'https://ejcajjtptbrcwmgzqhjz.supabase.co',
+      'sb_publishable_LF8EU4bFZpegd6wZPXGynQ_j_nkEGdP'
+    );
+
+    function updateVal(field) {
+      document.getElementById(field + '-val').textContent = document.getElementById(field).value;
+    }
+
+    function getDateStr(d) { return d.toISOString().split('T')[0]; }
+
+    let userId = null;
+    let alreadyDone = false;
+
+    (async () => {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) { window.location.href = 'index.html'; return; }
+      userId = user.id;
+
+      const today = new Date();
+      const todayStr = getDateStr(today);
+      document.getElementById('date-label').textContent =
+        today.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+
+      const { data: existing } = await sb.from('checkins')
+        .select('*').eq('user_id', userId).eq('date', todayStr).single();
+
+      if (existing) {
+        alreadyDone = true;
+        document.getElementById('already-done-msg').style.display = 'block';
+        // 既存値をスライダーに反映
+        document.getElementById('mood').value = existing.mood;
+        document.getElementById('action').value = existing.action;
+        document.getElementById('state').value = existing.state;
+        document.getElementById('mood-val').textContent = existing.mood;
+        document.getElementById('action-val').textContent = existing.action;
+        document.getElementById('state-val').textContent = existing.state;
+        if (existing.note) document.getElementById('note').value = existing.note;
+        document.getElementById('submit-btn').textContent = '更新する';
+      }
+    })();
+
+    async function submitCheckin() {
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.textContent = '送信中...';
+
+      const today = new Date();
+      const data = {
+        user_id: userId,
+        date: getDateStr(today),
+        mood: parseInt(document.getElementById('mood').value),
+        action: parseInt(document.getElementById('action').value),
+        state: parseInt(document.getElementById('state').value),
+        note: document.getElementById('note').value.trim() || null
+      };
+
+      const { error } = alreadyDone
+        ? await sb.from('checkins').update({ mood: data.mood, action: data.action, state: data.state, note: data.note }).eq('user_id', userId).eq('date', data.date)
+        : await sb.from('checkins').insert(data);
+
+      if (error) {
+        alert('送信に失敗しました。もう一度お試しください。');
+        btn.disabled = false;
+        btn.textContent = alreadyDone ? '更新する' : 'チェックインする';
+        return;
+      }
+
+      document.getElementById('form-content').style.display = 'none';
+      document.getElementById('done-screen').style.display = 'block';
+    }
+  </script>
+</body>
+</html>

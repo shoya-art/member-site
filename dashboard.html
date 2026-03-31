@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ダッシュボード | 復縁サポート</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0D0D0D;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+    .header {
+      background: #1A1A1A;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #2A2A2A;
+    }
+    .header h1 { font-size: 17px; font-weight: 700; }
+    .header-right { display: flex; gap: 12px; align-items: center; }
+    .logout-btn {
+      background: none;
+      border: 1px solid #444;
+      color: #888;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .admin-btn {
+      background: #E8637A;
+      border: none;
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .content { padding: 20px; max-width: 600px; margin: 0 auto; }
+
+    /* Welcome */
+    .welcome { margin-bottom: 24px; }
+    .welcome h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .welcome p { font-size: 14px; color: #888; }
+    .goal-badge {
+      display: inline-block;
+      background: #1F1518;
+      border: 1px solid #E8637A;
+      color: #E8637A;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-top: 8px;
+    }
+
+    /* Stats row */
+    .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+    .stat-card {
+      background: #1A1A1A;
+      border-radius: 12px;
+      padding: 16px 12px;
+      text-align: center;
+    }
+    .stat-value { font-size: 28px; font-weight: 800; color: #E8637A; }
+    .stat-label { font-size: 11px; color: #888; margin-top: 4px; }
+
+    /* Check-in CTA */
+    .checkin-cta {
+      background: linear-gradient(135deg, #E8637A 0%, #c44d63 100%);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .checkin-cta:hover { opacity: .9; }
+    .checkin-cta.done { background: #1A3A2A; border: 1px solid #4CAF50; cursor: default; }
+    .checkin-cta.done:hover { opacity: 1; }
+    .checkin-cta-text h3 { font-size: 16px; font-weight: 700; }
+    .checkin-cta-text p { font-size: 13px; opacity: .85; margin-top: 4px; }
+    .checkin-cta.done .checkin-cta-text p { color: #6FCF97; opacity: 1; }
+    .checkin-arrow { font-size: 22px; }
+
+    /* Graph */
+    .section { background: #1A1A1A; border-radius: 14px; padding: 20px; margin-bottom: 20px; }
+    .section-title { font-size: 14px; font-weight: 700; color: #aaa; margin-bottom: 16px; letter-spacing: .5px; }
+
+    /* Nav */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #1A1A1A;
+      border-top: 1px solid #2A2A2A;
+      display: flex;
+      padding: 10px 0 20px;
+    }
+    .nav-item {
+      flex: 1;
+      text-align: center;
+      padding: 8px;
+      cursor: pointer;
+      color: #555;
+      transition: color .2s;
+      text-decoration: none;
+    }
+    .nav-item.active { color: #E8637A; }
+    .nav-icon { font-size: 22px; }
+    .nav-label { font-size: 10px; margin-top: 2px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>復縁サポート</h1>
+    <div class="header-right">
+      <span id="admin-link" style="display:none">
+        <button class="admin-btn" onclick="window.location.href='admin.html'">管理画面</button>
+      </span>
+      <button class="logout-btn" onclick="logout()">ログアウト</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="welcome">
+      <h2 id="welcome-text">こんにちは</h2>
+      <p id="date-text"></p>
+      <div class="goal-badge" id="goal-badge"></div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value" id="streak-val">0</div>
+        <div class="stat-label">連続チェックイン日</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="total-val">0</div>
+        <div class="stat-label">総チェックイン数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="avg-val">-</div>
+        <div class="stat-label">今週の平均スコア</div>
+      </div>
+    </div>
+
+    <div class="checkin-cta" id="checkin-cta" onclick="gotoCheckin()">
+      <div class="checkin-cta-text">
+        <h3 id="cta-title">今日のチェックインをする</h3>
+        <p id="cta-sub">毎日の記録が復縁への近道です</p>
+      </div>
+      <div class="checkin-arrow" id="cta-arrow">→</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">過去7日間のスコア推移</div>
+      <canvas id="scoreChart" height="120"></canvas>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a class="nav-item active" href="dashboard.html">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-label">ホーム</div>
+    </a>
+    <a class="nav-item" href="checkin.html">
+      <div class="nav-icon">✏️</div>
+      <div class="nav-label">チェックイン</div>
+    </a>
+    <a class="nav-item" href="lectures.html">
+      <div class="nav-icon">▶️</div>
+      <div class="nav-label">講義</div>
+    </a>
+  </nav>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    const { createClient } = window.supabase;
+    const sb = createClient(
+      'https://ejcajjtptbrcwmgzqhjz.supabase.co',
+      'sb_publishable_LF8EU4bFZpegd6wZPXGynQ_j_nkEGdP'
+    );
+
+    const ADMIN_EMAIL = 'shoyaaaaaa1127@gmail.com';
+    const GOAL_LABELS = {
+      reconnect: '💕 元彼と復縁したい',
+      next_love: '🌱 次の恋愛で成功したい',
+      closure: '🕊️ 納得できる終わり方を知りたい'
+    };
+
+    function gotoCheckin() {
+      const cta = document.getElementById('checkin-cta');
+      if (!cta.classList.contains('done')) window.location.href = 'checkin.html';
+    }
+
+    async function logout() {
+      await sb.auth.signOut();
+      window.location.href = 'index.html';
+    }
+
+    function getDateStr(d) {
+      return d.toISOString().split('T')[0];
+    }
+
+    (async () => {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) { window.location.href = 'index.html'; return; }
+
+      // 管理者チェック
+      if (user.email === ADMIN_EMAIL) {
+        document.getElementById('admin-link').style.display = 'inline';
+      }
+
+      // プロフィール取得
+      const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
+      if (!profile || !profile.goal) { window.location.href = 'onboarding.html'; return; }
+
+      const name = profile.name || 'さん';
+      document.getElementById('welcome-text').textContent = `${name}、こんにちは`;
+      document.getElementById('goal-badge').textContent = GOAL_LABELS[profile.goal] || '';
+
+      // 今日の日付
+      const today = new Date();
+      document.getElementById('date-text').textContent =
+        today.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+
+      // チェックイン取得（全履歴）
+      const { data: checkins } = await sb.from('checkins')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('date', { ascending: false });
+
+      const total = checkins ? checkins.length : 0;
+      document.getElementById('total-val').textContent = total;
+
+      // 今日チェックイン済みか
+      const todayStr = getDateStr(today);
+      const todayCheckin = checkins && checkins.find(c => c.date === todayStr);
+      const cta = document.getElementById('checkin-cta');
+      if (todayCheckin) {
+        cta.classList.add('done');
+        document.getElementById('cta-title').textContent = '今日のチェックイン完了！';
+        document.getElementById('cta-sub').textContent = `スコア: 気分${todayCheckin.mood} 行動${todayCheckin.action} 状態${todayCheckin.state}`;
+        document.getElementById('cta-arrow').textContent = '✓';
+      }
+
+      // 連続日数計算
+      let streak = 0;
+      if (checkins && checkins.length > 0) {
+        const sortedDates = checkins.map(c => c.date).sort().reverse();
+        const checkDate = new Date(today);
+        if (!todayCheckin) checkDate.setDate(checkDate.getDate() - 1);
+        for (const dateStr of sortedDates) {
+          if (dateStr === getDateStr(checkDate)) {
+            streak++;
+            checkDate.setDate(checkDate.getDate() - 1);
+          } else { break; }
+        }
+      }
+      document.getElementById('streak-val').textContent = streak;
+
+      // 今週平均スコア
+      const weekAgo = new Date(today);
+      weekAgo.setDate(weekAgo.getDate() - 6);
+      const weekCheckins = checkins ? checkins.filter(c => c.date >= getDateStr(weekAgo)) : [];
+      if (weekCheckins.length > 0) {
+        const avgScore = weekCheckins.reduce((sum, c) => sum + (c.mood + c.action + c.state) / 3, 0) / weekCheckins.length;
+        document.getElementById('avg-val').textContent = avgScore.toFixed(1);
+      }
+
+      // グラフデータ（過去7日）
+      const labels = [];
+      const moodData = [];
+      const actionData = [];
+      const stateData = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const ds = getDateStr(d);
+        labels.push((d.getMonth() + 1) + '/' + d.getDate());
+        const c = checkins && checkins.find(x => x.date === ds);
+        moodData.push(c ? c.mood : null);
+        actionData.push(c ? c.action : null);
+        stateData.push(c ? c.state : null);
+      }
+
+      const ctx = document.getElementById('scoreChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: '気分', data: moodData, borderColor: '#E8637A', backgroundColor: 'transparent', tension: .4, pointRadius: 5, spanGaps: true },
+            { label: '行動', data: actionData, borderColor: '#6B9FE8', backgroundColor: 'transparent', tension: .4, pointRadius: 5, spanGaps: true },
+            { label: '状態', data: stateData, borderColor: '#68D391', backgroundColor: 'transparent', tension: .4, pointRadius: 5, spanGaps: true }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { min: 1, max: 5, ticks: { stepSize: 1, color: '#666' }, grid: { color: '#222' } },
+            x: { ticks: { color: '#666' }, grid: { color: '#222' } }
+          },
+          plugins: { legend: { labels: { color: '#aaa', boxWidth: 12 } } }
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

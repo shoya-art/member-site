@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ログイン | 復縁サポート</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0D0D0D;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      width: 100%;
+      max-width: 400px;
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .logo h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.5;
+    }
+    .logo p {
+      font-size: 13px;
+      color: #888;
+      margin-top: 6px;
+    }
+    .card {
+      background: #1A1A1A;
+      border-radius: 16px;
+      padding: 32px 28px;
+    }
+    .tab-row {
+      display: flex;
+      background: #0D0D0D;
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 28px;
+    }
+    .tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      color: #888;
+      transition: all .2s;
+    }
+    .tab.active {
+      background: #E8637A;
+      color: #fff;
+      font-weight: 600;
+    }
+    .field {
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      color: #aaa;
+      margin-bottom: 6px;
+    }
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      background: #0D0D0D;
+      border: 1px solid #2A2A2A;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input:focus { border-color: #E8637A; }
+    .btn {
+      width: 100%;
+      padding: 16px;
+      background: #E8637A;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity .2s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .error {
+      background: #3D1A1A;
+      color: #FF8A8A;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .success {
+      background: #1A3D2A;
+      color: #6FCF97;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    #register-name { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <h1>復縁サポート<br>会員サイト</h1>
+      <p>ジロー恋愛アドバイザー</p>
+    </div>
+    <div class="card">
+      <div class="tab-row">
+        <div class="tab active" id="tab-login" onclick="switchTab('login')">ログイン</div>
+        <div class="tab" id="tab-register" onclick="switchTab('register')">新規登録</div>
+      </div>
+
+      <div id="error-msg" class="error"></div>
+      <div id="success-msg" class="success"></div>
+
+      <div id="register-name" class="field">
+        <label>お名前（ニックネームでOK）</label>
+        <input type="text" id="name" placeholder="例：あかり">
+      </div>
+      <div class="field">
+        <label>メールアドレス</label>
+        <input type="email" id="email" placeholder="example@mail.com">
+      </div>
+      <div class="field">
+        <label>パスワード</label>
+        <input type="password" id="password" placeholder="6文字以上">
+      </div>
+      <button class="btn" id="submit-btn" onclick="handleSubmit()">ログイン</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    const { createClient } = window.supabase;
+    const sb = createClient(
+      'https://ejcajjtptbrcwmgzqhjz.supabase.co',
+      'sb_publishable_LF8EU4bFZpegd6wZPXGynQ_j_nkEGdP'
+    );
+
+    let mode = 'login';
+
+    function switchTab(tab) {
+      mode = tab;
+      document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+      document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+      document.getElementById('register-name').style.display = tab === 'register' ? 'block' : 'none';
+      document.getElementById('submit-btn').textContent = tab === 'login' ? 'ログイン' : '登録する';
+      hideMessages();
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg;
+      el.style.display = 'block';
+      document.getElementById('success-msg').style.display = 'none';
+    }
+
+    function showSuccess(msg) {
+      const el = document.getElementById('success-msg');
+      el.textContent = msg;
+      el.style.display = 'block';
+      document.getElementById('error-msg').style.display = 'none';
+    }
+
+    function hideMessages() {
+      document.getElementById('error-msg').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'none';
+    }
+
+    async function handleSubmit() {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('submit-btn');
+
+      if (!email || !password) { showError('メールアドレスとパスワードを入力してください'); return; }
+
+      btn.disabled = true;
+      btn.textContent = '処理中...';
+
+      if (mode === 'login') {
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) {
+          showError('メールアドレスまたはパスワードが正しくありません');
+          btn.disabled = false;
+          btn.textContent = 'ログイン';
+          return;
+        }
+        // プロフィール確認
+        const { data: profile } = await sb.from('profiles').select('goal').eq('id', data.user.id).single();
+        if (!profile || !profile.goal) {
+          window.location.href = 'onboarding.html';
+        } else {
+          window.location.href = 'dashboard.html';
+        }
+
+      } else {
+        const name = document.getElementById('name').value.trim();
+        if (!name) { showError('お名前を入力してください'); btn.disabled = false; btn.textContent = '登録する'; return; }
+
+        const { data, error } = await sb.auth.signUp({ email, password });
+        if (error) {
+          showError('登録に失敗しました：' + error.message);
+          btn.disabled = false;
+          btn.textContent = '登録する';
+          return;
+        }
+        // プロフィール作成
+        await sb.from('profiles').insert({ id: data.user.id, email, name });
+        showSuccess('登録完了！メールを確認して認証してからログインしてください。');
+        btn.disabled = false;
+        btn.textContent = '登録する';
+      }
+    }
+
+    // Enterキーでも送信
+    document.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleSubmit(); });
+
+    // 既にログイン済みならダッシュボードへ
+    (async () => {
+      const { data: { user } } = await sb.auth.getUser();
+      if (user) {
+        const { data: profile } = await sb.from('profiles').select('goal').eq('id', user.id).single();
+        window.location.href = (!profile || !profile.goal) ? 'onboarding.html' : 'dashboard.html';
+      }
+    })();
+  </script>
+</body>
+</html>

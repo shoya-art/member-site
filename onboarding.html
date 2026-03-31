@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ゴール設定 | 復縁サポート</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0D0D0D;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container { width: 100%; max-width: 480px; }
+    .header { text-align: center; margin-bottom: 36px; }
+    .header h1 { font-size: 22px; font-weight: 700; line-height: 1.6; }
+    .header p { font-size: 14px; color: #888; margin-top: 10px; line-height: 1.7; }
+    .step { font-size: 12px; color: #E8637A; font-weight: 600; letter-spacing: 1px; margin-bottom: 12px; }
+    .choices { display: flex; flex-direction: column; gap: 14px; }
+    .choice {
+      background: #1A1A1A;
+      border: 2px solid #2A2A2A;
+      border-radius: 14px;
+      padding: 22px 20px;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .choice:hover { border-color: #E8637A; background: #1F1518; }
+    .choice.selected { border-color: #E8637A; background: #1F1518; }
+    .choice-icon { font-size: 28px; flex-shrink: 0; }
+    .choice-text h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .choice-text p { font-size: 13px; color: #888; line-height: 1.6; }
+    .btn {
+      width: 100%;
+      padding: 18px;
+      background: #E8637A;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 28px;
+      transition: opacity .2s;
+      opacity: .4;
+    }
+    .btn.enabled { opacity: 1; }
+    .btn.enabled:hover { opacity: .85; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="step">STEP 1 / 1</div>
+      <h1>あなたの目標を<br>教えてください</h1>
+      <p>目標に合わせたコンテンツを<br>提供するために使います</p>
+    </div>
+
+    <div class="choices">
+      <div class="choice" id="choice-reconnect" onclick="select('reconnect')">
+        <div class="choice-icon">💕</div>
+        <div class="choice-text">
+          <h3>元彼と復縁したい</h3>
+          <p>別れた相手ともう一度やり直したい。<br>復縁に特化したアドバイスを受けたい。</p>
+        </div>
+      </div>
+      <div class="choice" id="choice-next_love" onclick="select('next_love')">
+        <div class="choice-icon">🌱</div>
+        <div class="choice-text">
+          <h3>次の恋愛で失敗したくない</h3>
+          <p>なぜ別れたのか理解して、<br>次の恋愛をうまくいかせたい。</p>
+        </div>
+      </div>
+      <div class="choice" id="choice-closure" onclick="select('closure')">
+        <div class="choice-icon">🕊️</div>
+        <div class="choice-text">
+          <h3>納得できる終わらせ方を知りたい</h3>
+          <p>気持ちを整理して、<br>前向きに進める状態になりたい。</p>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn" id="next-btn" onclick="saveGoal()">この目標で始める</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    const { createClient } = window.supabase;
+    const sb = createClient(
+      'https://ejcajjtptbrcwmgzqhjz.supabase.co',
+      'sb_publishable_LF8EU4bFZpegd6wZPXGynQ_j_nkEGdP'
+    );
+
+    let selectedGoal = null;
+
+    // 認証チェック
+    (async () => {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) { window.location.href = 'index.html'; return; }
+      // すでにgoalが設定済みならダッシュボードへ
+      const { data: profile } = await sb.from('profiles').select('goal').eq('id', user.id).single();
+      if (profile && profile.goal) window.location.href = 'dashboard.html';
+    })();
+
+    function select(goal) {
+      selectedGoal = goal;
+      document.querySelectorAll('.choice').forEach(el => el.classList.remove('selected'));
+      document.getElementById('choice-' + goal).classList.add('selected');
+      document.getElementById('next-btn').classList.add('enabled');
+    }
+
+    async function saveGoal() {
+      if (!selectedGoal) return;
+      const btn = document.getElementById('next-btn');
+      btn.textContent = '保存中...';
+
+      const { data: { user } } = await sb.auth.getUser();
+      await sb.from('profiles').update({ goal: selectedGoal }).eq('id', user.id);
+      window.location.href = 'dashboard.html';
+    }
+  </script>
+</body>
+</html>

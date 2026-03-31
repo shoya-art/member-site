@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理画面 | 復縁サポート</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0D0D0D;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+    .header {
+      background: #1A1A1A;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #2A2A2A;
+    }
+    .header h1 { font-size: 17px; font-weight: 700; }
+    .back-btn {
+      background: none; border: 1px solid #444; color: #888;
+      padding: 6px 14px; border-radius: 8px; font-size: 12px; cursor: pointer;
+    }
+    .content { padding: 20px; max-width: 900px; margin: 0 auto; }
+
+    /* Stats overview */
+    .overview { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+    @media (max-width: 600px) { .overview { grid-template-columns: repeat(2, 1fr); } }
+    .ov-card { background: #1A1A1A; border-radius: 12px; padding: 16px; text-align: center; }
+    .ov-value { font-size: 28px; font-weight: 800; color: #E8637A; }
+    .ov-label { font-size: 11px; color: #888; margin-top: 4px; }
+
+    /* Goal distribution */
+    .section { background: #1A1A1A; border-radius: 14px; padding: 20px; margin-bottom: 20px; }
+    .section-title { font-size: 14px; font-weight: 700; color: #aaa; margin-bottom: 16px; }
+    .goal-bars { display: flex; flex-direction: column; gap: 10px; }
+    .goal-bar-row { display: flex; align-items: center; gap: 10px; }
+    .goal-bar-label { font-size: 13px; width: 180px; flex-shrink: 0; }
+    .goal-bar-bg { flex: 1; background: #2A2A2A; border-radius: 4px; height: 10px; }
+    .goal-bar-fill { height: 10px; border-radius: 4px; background: #E8637A; transition: width .5s; }
+    .goal-bar-count { font-size: 13px; color: #888; width: 30px; text-align: right; }
+
+    /* Member table */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 10px 12px; color: #888; border-bottom: 1px solid #2A2A2A; white-space: nowrap; }
+    td { padding: 12px; border-bottom: 1px solid #1E1E1E; vertical-align: middle; }
+    tr:hover td { background: #222; }
+    .goal-tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .goal-reconnect { background: #2D1A1F; color: #E8637A; }
+    .goal-next_love { background: #1A2535; color: #6B9FE8; }
+    .goal-closure { background: #1A2A1A; color: #68D391; }
+    .score-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-right: 4px;
+    }
+    .no-data { color: #555; font-style: italic; }
+
+    /* Member detail modal */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.8);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #1A1A1A;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 500px;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 24px;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal-title { font-size: 16px; font-weight: 700; }
+    .modal-close { font-size: 20px; cursor: pointer; color: #888; }
+    .checkin-list { display: flex; flex-direction: column; gap: 10px; }
+    .checkin-item { background: #0D0D0D; border-radius: 10px; padding: 12px 14px; }
+    .checkin-date { font-size: 12px; color: #888; margin-bottom: 6px; }
+    .checkin-scores { display: flex; gap: 12px; font-size: 13px; }
+    .checkin-scores span { color: #aaa; }
+    .checkin-scores strong { color: #E8637A; }
+    .checkin-note { font-size: 12px; color: #777; margin-top: 6px; line-height: 1.6; }
+
+    #no-access { text-align: center; padding: 80px 20px; }
+    #no-access h2 { font-size: 20px; margin-bottom: 10px; }
+    #no-access p { color: #888; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>管理画面</h1>
+    <button class="back-btn" onclick="window.location.href='dashboard.html'">← ダッシュボード</button>
+  </div>
+
+  <div id="no-access" style="display:none">
+    <h2>アクセス権限がありません</h2>
+    <p>この画面は管理者専用です</p>
+  </div>
+
+  <div class="content" id="admin-content" style="display:none">
+    <div class="overview">
+      <div class="ov-card"><div class="ov-value" id="total-members">0</div><div class="ov-label">総会員数</div></div>
+      <div class="ov-card"><div class="ov-value" id="active-today">0</div><div class="ov-label">今日チェックイン</div></div>
+      <div class="ov-card"><div class="ov-value" id="active-week">0</div><div class="ov-label">今週チェックイン</div></div>
+      <div class="ov-card"><div class="ov-value" id="avg-score">-</div><div class="ov-label">今週平均スコア</div></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">ゴール別会員数</div>
+      <div class="goal-bars">
+        <div class="goal-bar-row">
+          <div class="goal-bar-label">💕 復縁したい</div>
+          <div class="goal-bar-bg"><div class="goal-bar-fill" id="bar-reconnect" style="width:0%"></div></div>
+          <div class="goal-bar-count" id="count-reconnect">0</div>
+        </div>
+        <div class="goal-bar-row">
+          <div class="goal-bar-label">🌱 次の恋愛で成功したい</div>
+          <div class="goal-bar-bg"><div class="goal-bar-fill" id="bar-next_love" style="width:0%;background:#6B9FE8"></div></div>
+          <div class="goal-bar-count" id="count-next_love">0</div>
+        </div>
+        <div class="goal-bar-row">
+          <div class="goal-bar-label">🕊️ 納得できる終わり方</div>
+          <div class="goal-bar-bg"><div class="goal-bar-fill" id="bar-closure" style="width:0%;background:#68D391"></div></div>
+          <div class="goal-bar-count" id="count-closure">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">会員一覧</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>名前</th>
+              <th>ゴール</th>
+              <th>登録日</th>
+              <th>チェックイン数</th>
+              <th>最終記録</th>
+              <th>平均スコア</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="member-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Member detail modal -->
+  <div class="modal-overlay" id="modal" onclick="closeModal(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-title">チェックイン履歴</div>
+        <div class="modal-close" onclick="document.getElementById('modal').classList.remove('open')">✕</div>
+      </div>
+      <div class="checkin-list" id="modal-checkins"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    const { createClient } = window.supabase;
+    const sb = createClient(
+      'https://ejcajjtptbrcwmgzqhjz.supabase.co',
+      'sb_publishable_LF8EU4bFZpegd6wZPXGynQ_j_nkEGdP'
+    );
+
+    const ADMIN_EMAIL = 'shoyaaaaaa1127@gmail.com';
+    const GOAL_LABELS = { reconnect: '復縁したい', next_love: '次の恋愛', closure: '納得できる終わり' };
+    const GOAL_CLASSES = { reconnect: 'goal-reconnect', next_love: 'goal-next_love', closure: 'goal-closure' };
+
+    function getDateStr(d) { return d.toISOString().split('T')[0]; }
+
+    function closeModal(e) {
+      if (e.target.id === 'modal') document.getElementById('modal').classList.remove('open');
+    }
+
+    async function showMemberDetail(userId, name) {
+      document.getElementById('modal-title').textContent = `${name} のチェックイン履歴`;
+      document.getElementById('modal-checkins').innerHTML = '<p style="color:#888">読み込み中...</p>';
+      document.getElementById('modal').classList.add('open');
+
+      const { data: checkins } = await sb.from('checkins')
+        .select('*').eq('user_id', userId).order('date', { ascending: false }).limit(30);
+
+      if (!checkins || checkins.length === 0) {
+        document.getElementById('modal-checkins').innerHTML = '<p style="color:#888">チェックインデータがありません</p>';
+        return;
+      }
+
+      document.getElementById('modal-checkins').innerHTML = checkins.map(c => `
+        <div class="checkin-item">
+          <div class="checkin-date">${c.date}</div>
+          <div class="checkin-scores">
+            <span>気分 <strong>${c.mood}</strong></span>
+            <span>行動 <strong>${c.action}</strong></span>
+            <span>状態 <strong>${c.state}</strong></span>
+            <span style="color:#E8637A">平均 <strong>${((c.mood+c.action+c.state)/3).toFixed(1)}</strong></span>
+          </div>
+          ${c.note ? `<div class="checkin-note">"${c.note}"</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    (async () => {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user || user.email !== ADMIN_EMAIL) {
+        document.getElementById('no-access').style.display = 'block';
+        return;
+      }
+
+      document.getElementById('admin-content').style.display = 'block';
+
+      // 全プロフィール取得
+      const { data: profiles } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+      // 全チェックイン取得
+      const { data: allCheckins } = await sb.from('checkins').select('*');
+
+      const total = profiles ? profiles.length : 0;
+      document.getElementById('total-members').textContent = total;
+
+      // 今日・今週のアクティブ数
+      const today = new Date();
+      const todayStr = getDateStr(today);
+      const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 6);
+      const weekAgoStr = getDateStr(weekAgo);
+
+      const todayActive = new Set(allCheckins?.filter(c => c.date === todayStr).map(c => c.user_id)).size;
+      const weekActive = new Set(allCheckins?.filter(c => c.date >= weekAgoStr).map(c => c.user_id)).size;
+      document.getElementById('active-today').textContent = todayActive;
+      document.getElementById('active-week').textContent = weekActive;
+
+      // 今週平均スコア
+      const weekCheckins = allCheckins?.filter(c => c.date >= weekAgoStr) || [];
+      if (weekCheckins.length > 0) {
+        const avg = weekCheckins.reduce((sum, c) => sum + (c.mood + c.action + c.state) / 3, 0) / weekCheckins.length;
+        document.getElementById('avg-score').textContent = avg.toFixed(1);
+      }
+
+      // ゴール別
+      const goalCounts = { reconnect: 0, next_love: 0, closure: 0 };
+      profiles?.forEach(p => { if (p.goal) goalCounts[p.goal]++; });
+      const maxGoal = Math.max(...Object.values(goalCounts), 1);
+      Object.entries(goalCounts).forEach(([goal, count]) => {
+        document.getElementById('count-' + goal).textContent = count;
+        document.getElementById('bar-' + goal).style.width = (count / maxGoal * 100) + '%';
+      });
+
+      // 会員テーブル
+      const tbody = document.getElementById('member-table');
+      if (!profiles || profiles.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="no-data" style="padding:20px">会員がいません</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = profiles.map(p => {
+        const memberCheckins = allCheckins?.filter(c => c.user_id === p.id) || [];
+        const checkinCount = memberCheckins.length;
+        const lastCheckin = memberCheckins.sort((a, b) => b.date.localeCompare(a.date))[0];
+        const avgScore = checkinCount > 0
+          ? (memberCheckins.reduce((sum, c) => sum + (c.mood + c.action + c.state) / 3, 0) / checkinCount).toFixed(1)
+          : '-';
+        const regDate = new Date(p.created_at).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
+
+        return `
+          <tr>
+            <td>${p.name || '-'}</td>
+            <td>${p.goal ? `<span class="goal-tag ${GOAL_CLASSES[p.goal]}">${GOAL_LABELS[p.goal]}</span>` : '<span class="no-data">未設定</span>'}</td>
+            <td>${regDate}</td>
+            <td>${checkinCount}回</td>
+            <td>${lastCheckin ? lastCheckin.date : '<span class="no-data">なし</span>'}</td>
+            <td>${avgScore}</td>
+            <td><button onclick="showMemberDetail('${p.id}','${p.name||'名前なし'}')" style="background:#2A2A2A;color:#aaa;border:none;padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer">詳細</button></td>
+          </tr>
+        `;
+      }).join('');
+    })();
+  </script>
+</body>
+</html>
