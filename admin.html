@@ -197,16 +197,18 @@
     <div class="section">
       <div class="section-title">会員の記録を一括で見る</div>
       <p style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.6">
-        日報（チェックインのメモ含む）・ワーク回答・講義への質問メモ・復縁日記を、全会員分まとめて表示します。タブで切り替えてください。
+        <strong>チェックイン</strong>（気分スライダー＋メモ）・<strong>日報</strong>（<code>daily_reports</code>：良かったことなど）・ワーク・講義メモ・復縁日記を、全会員分まとめて表示します。
       </p>
       <div class="feed-tabs" id="feed-tabs">
-        <button type="button" class="feed-tab active" data-tab="checkin">日報・チェックイン</button>
+        <button type="button" class="feed-tab active" data-tab="checkin">チェックイン</button>
+        <button type="button" class="feed-tab" data-tab="daily">日報（毎日）</button>
         <button type="button" class="feed-tab" data-tab="work">ワーク回答</button>
         <button type="button" class="feed-tab" data-tab="memo">講義メモ</button>
         <button type="button" class="feed-tab" data-tab="diary">復縁日記</button>
       </div>
       <div id="feed-hint-box"></div>
       <div class="feed-panel active" id="panel-checkin"></div>
+      <div class="feed-panel" id="panel-daily"></div>
       <div class="feed-panel" id="panel-work"></div>
       <div class="feed-panel" id="panel-memo"></div>
       <div class="feed-panel" id="panel-diary"></div>
@@ -305,6 +307,27 @@
       return JSON.stringify(j, null, 2);
     }
 
+    /** daily_reports 行を管理画面用テキストに整形 */
+    function formatDailyReportRow(r) {
+      const pairs = [
+        ['良かったこと①', r.good1],
+        ['良かったこと②', r.good2],
+        ['良かったこと③', r.good3],
+        ['自分を褒める', r.self_praise],
+        ['今日の行動', r.action_toward],
+        ['成長メモ', r.growth],
+        ['自己肯定スコア（1〜10）', r.self_esteem_score],
+        ['ポジティブスコア（1〜10）', r.positive_score],
+        ['諦めそうになった瞬間', r.give_up_moment],
+        ['弱み・改善したい点', r.weak_point],
+      ];
+      const lines = [];
+      for (const [label, val] of pairs) {
+        if (val != null && String(val).trim() !== '') lines.push(`${label}\n${String(val).trim()}`);
+      }
+      return lines.length ? lines.join('\n\n') : '（本文の入力がまだありません）';
+    }
+
     function memberLabel(map, userId) {
       const p = map[userId];
       if (!p) return esc(userId);
@@ -351,6 +374,7 @@
       if (errors.work) parts.push('ワーク一覧: <code>work_answers</code> の読み取り権限（管理者用 RLS）を確認してください。supabase-setup-v2.sql の admin ポリシーが有効か見直しください。');
       if (errors.memo) parts.push('講義メモ: <code>question_memos</code> テーブルと管理者用 SELECT ポリシー（v3）を確認してください。');
       if (errors.diary) parts.push('復縁日記: <code>diary_entries</code> テーブルが無い、または管理者用 SELECT ポリシー（v3）が未設定の可能性があります。');
+      if (errors.daily) parts.push('日報（毎日）: <code>daily_reports</code> の読み取りに失敗しました。テーブル作成と <code>admin read daily_reports</code> ポリシー（supabase-setup-v2.sql）を確認してください。');
       const hint = document.getElementById('feed-hint-box');
       if (parts.length === 0) {
         hint.innerHTML = '';
@@ -385,16 +409,18 @@
 
       const profileMap = Object.fromEntries((profiles || []).map(p => [p.id, p]));
 
-      const [waRes, meRes, diRes] = await Promise.all([
+      const [waRes, meRes, diRes, drRes] = await Promise.all([
         sb.from('work_answers').select('*').order('updated_at', { ascending: false }).limit(500),
         sb.from('question_memos').select('*').order('created_at', { ascending: false }).limit(300),
         sb.from('diary_entries').select('*').order('date', { ascending: false }).limit(300),
+        sb.from('daily_reports').select('*').order('date', { ascending: false }).limit(500),
       ]);
 
       const feedErrors = {
         work: !!(waRes.error),
         memo: !!(meRes.error),
         diary: !!(diRes.error),
+        daily: !!(drRes.error),
       };
       renderFeedHint(feedErrors);
 
@@ -418,6 +444,31 @@
               <span><strong>気分/行動/状態</strong> ${esc(c.mood)} / ${esc(c.action)} / ${esc(c.state)}</span>
             </div>
             ${c.note ? `<div class="feed-body">${esc(c.note)}</div>` : '<div class="feed-body" style="color:#666">（メモなし）</div>'}
+          </div>
+        `).join('');
+      }
+
+      const elDaily = document.getElementById('panel-daily');
+      if (drRes.error || !drRes.data || drRes.data.length === 0) {
+        elDaily.innerHTML = drRes.error
+          ? '<p class="no-data" style="padding:12px">日報（daily_reports）を取得できません。</p>'
+          : '<p class="no-data" style="padding:12px">日報の記録がありません</p>';
+      } else {
+        const sortedDaily = [...drRes.data].sort((a, b) => {
+          const c = String(b.date).localeCompare(String(a.date));
+          if (c !== 0) return c;
+          const ea = (profileMap[a.user_id]?.email || '');
+          const eb = (profileMap[b.user_id]?.email || '');
+          return ea.localeCompare(eb);
+        });
+        elDaily.innerHTML = sortedDaily.map(r => `
+          <div class="feed-card">
+            <div class="feed-meta">
+              <span><strong>日付</strong> ${esc(r.date)}</span>
+              <span><strong>会員</strong> ${memberLabel(profileMap, r.user_id)}</span>
+              <span><strong>更新</strong> ${esc(r.updated_at || r.created_at || '')}</span>
+            </div>
+            <div class="feed-body">${esc(formatDailyReportRow(r))}</div>
           </div>
         `).join('');
       }
