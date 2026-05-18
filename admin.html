@@ -26,16 +26,14 @@
       background: none; border: 1px solid #444; color: #888;
       padding: 6px 14px; border-radius: 8px; font-size: 12px; cursor: pointer;
     }
-    .content { padding: 20px; max-width: 900px; margin: 0 auto; }
+    .content { padding: 20px; max-width: 1100px; margin: 0 auto; }
 
-    /* Stats overview */
     .overview { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
     @media (max-width: 600px) { .overview { grid-template-columns: repeat(2, 1fr); } }
     .ov-card { background: #1A1A1A; border-radius: 12px; padding: 16px; text-align: center; }
     .ov-value { font-size: 28px; font-weight: 800; color: #E8637A; }
     .ov-label { font-size: 11px; color: #888; margin-top: 4px; }
 
-    /* Goal distribution */
     .section { background: #1A1A1A; border-radius: 14px; padding: 20px; margin-bottom: 20px; }
     .section-title { font-size: 14px; font-weight: 700; color: #aaa; margin-bottom: 16px; }
     .goal-bars { display: flex; flex-direction: column; gap: 10px; }
@@ -45,11 +43,10 @@
     .goal-bar-fill { height: 10px; border-radius: 4px; background: #E8637A; transition: width .5s; }
     .goal-bar-count { font-size: 13px; color: #888; width: 30px; text-align: right; }
 
-    /* Member table */
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th { text-align: left; padding: 10px 12px; color: #888; border-bottom: 1px solid #2A2A2A; white-space: nowrap; }
-    td { padding: 12px; border-bottom: 1px solid #1E1E1E; vertical-align: middle; }
+    td { padding: 12px; border-bottom: 1px solid #1E1E1E; vertical-align: top; }
     tr:hover td { background: #222; }
     .goal-tag {
       display: inline-block;
@@ -61,15 +58,67 @@
     .goal-reconnect { background: #2D1A1F; color: #E8637A; }
     .goal-next_love { background: #1A2535; color: #6B9FE8; }
     .goal-closure { background: #1A2A1A; color: #68D391; }
-    .score-dot {
-      display: inline-block;
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      margin-right: 4px;
-    }
     .no-data { color: #555; font-style: italic; }
 
-    /* Member detail modal */
+    .feed-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .feed-tab {
+      background: #2A2A2A;
+      border: 1px solid #333;
+      color: #aaa;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .feed-tab.active {
+      background: #E8637A;
+      border-color: #E8637A;
+      color: #fff;
+    }
+    .feed-panel { display: none; }
+    .feed-panel.active { display: block; }
+    .feed-hint {
+      font-size: 12px;
+      color: #888;
+      line-height: 1.6;
+      margin-bottom: 14px;
+      padding: 12px;
+      background: #0D0D0D;
+      border-radius: 10px;
+      border: 1px solid #2A2A2A;
+    }
+    .feed-hint code { color: #c9a227; font-size: 11px; }
+    .feed-card {
+      background: #0D0D0D;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      border: 1px solid #252525;
+    }
+    .feed-meta {
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+    }
+    .feed-meta strong { color: #ccc; }
+    .feed-body {
+      font-size: 13px;
+      color: #ddd;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .feed-title { font-size: 13px; font-weight: 700; color: #E8637A; margin-bottom: 6px; }
+
     .modal-overlay {
       display: none;
       position: fixed; inset: 0;
@@ -95,10 +144,10 @@
     .checkin-list { display: flex; flex-direction: column; gap: 10px; }
     .checkin-item { background: #0D0D0D; border-radius: 10px; padding: 12px 14px; }
     .checkin-date { font-size: 12px; color: #888; margin-bottom: 6px; }
-    .checkin-scores { display: flex; gap: 12px; font-size: 13px; }
+    .checkin-scores { display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; }
     .checkin-scores span { color: #aaa; }
     .checkin-scores strong { color: #E8637A; }
-    .checkin-note { font-size: 12px; color: #777; margin-top: 6px; line-height: 1.6; }
+    .checkin-note { font-size: 12px; color: #bbb; margin-top: 8px; line-height: 1.6; white-space: pre-wrap; }
 
     #no-access { text-align: center; padding: 80px 20px; }
     #no-access h2 { font-size: 20px; margin-bottom: 10px; }
@@ -146,6 +195,24 @@
     </div>
 
     <div class="section">
+      <div class="section-title">会員の記録を一括で見る</div>
+      <p style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.6">
+        日報（チェックインのメモ含む）・ワーク回答・講義への質問メモ・復縁日記を、全会員分まとめて表示します。タブで切り替えてください。
+      </p>
+      <div class="feed-tabs" id="feed-tabs">
+        <button type="button" class="feed-tab active" data-tab="checkin">日報・チェックイン</button>
+        <button type="button" class="feed-tab" data-tab="work">ワーク回答</button>
+        <button type="button" class="feed-tab" data-tab="memo">講義メモ</button>
+        <button type="button" class="feed-tab" data-tab="diary">復縁日記</button>
+      </div>
+      <div id="feed-hint-box"></div>
+      <div class="feed-panel active" id="panel-checkin"></div>
+      <div class="feed-panel" id="panel-work"></div>
+      <div class="feed-panel" id="panel-memo"></div>
+      <div class="feed-panel" id="panel-diary"></div>
+    </div>
+
+    <div class="section">
       <div class="section-title">会員一覧</div>
       <div class="table-wrap">
         <table>
@@ -166,7 +233,6 @@
     </div>
   </div>
 
-  <!-- Member detail modal -->
   <div class="modal-overlay" id="modal" onclick="closeModal(event)">
     <div class="modal">
       <div class="modal-header">
@@ -177,6 +243,7 @@
     </div>
   </div>
 
+  <script src="lectures-data.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script>
     const { createClient } = window.supabase;
@@ -189,7 +256,64 @@
     const GOAL_LABELS = { reconnect: '復縁したい', next_love: '次の恋愛', closure: '納得できる終わり' };
     const GOAL_CLASSES = { reconnect: 'goal-reconnect', next_love: 'goal-next_love', closure: 'goal-closure' };
 
+    const LECTURE_LIST = typeof LECTURES !== 'undefined' && Array.isArray(LECTURES) ? LECTURES : [];
+
     function getDateStr(d) { return d.toISOString().split('T')[0]; }
+
+    function esc(s) {
+      if (s == null || s === '') return '';
+      const d = document.createElement('div');
+      d.textContent = String(s);
+      return d.innerHTML;
+    }
+
+    function escAttr(s) {
+      return String(s ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function lectureTitle(id) {
+      const lec = LECTURE_LIST.find(l => l.id === id);
+      return lec ? lec.title : id;
+    }
+
+    function formatWorkAnswer(raw) {
+      if (!raw) return '(空)';
+      let j;
+      try { j = JSON.parse(raw); } catch { return raw; }
+      if (j.answers && Array.isArray(j.answers)) {
+        return j.answers.map((a, i) => `【問${i + 1}】\n${a || '（未入力）'}`).join('\n\n');
+      }
+      if (j.scores && Array.isArray(j.scores)) {
+        const t = j.total != null ? `合計: ${j.total}` : '';
+        return `チェックリスト回答\n${j.scores.map((n, i) => `${i + 1}. ${n}点`).join(' / ')}\n${t}`;
+      }
+      if (j.checked && Array.isArray(j.checked)) {
+        const note = j.note ? `\nメモ:\n${j.note}` : '';
+        return `チェック数: ${j.count ?? ''}${note}`;
+      }
+      if (j.scene0 !== undefined || Object.keys(j).some(k => k.startsWith('scene'))) {
+        return JSON.stringify(j, null, 2);
+      }
+      if (j.row0 !== undefined || Object.keys(j).some(k => k.startsWith('row'))) {
+        return JSON.stringify(j, null, 2);
+      }
+      return JSON.stringify(j, null, 2);
+    }
+
+    function memberLabel(map, userId) {
+      const p = map[userId];
+      if (!p) return esc(userId);
+      const name = (p.name || '').trim();
+      const email = (p.email || '').trim();
+      if (name && email) return esc(name) + ' <span style="color:#888">' + esc(email) + '</span>';
+      if (email) return esc(email);
+      return esc(userId);
+    }
 
     function closeModal(e) {
       if (e.target.id === 'modal') document.getElementById('modal').classList.remove('open');
@@ -210,16 +334,40 @@
 
       document.getElementById('modal-checkins').innerHTML = checkins.map(c => `
         <div class="checkin-item">
-          <div class="checkin-date">${c.date}</div>
+          <div class="checkin-date">${esc(c.date)}</div>
           <div class="checkin-scores">
-            <span>気分 <strong>${c.mood}</strong></span>
-            <span>行動 <strong>${c.action}</strong></span>
-            <span>状態 <strong>${c.state}</strong></span>
-            <span style="color:#E8637A">平均 <strong>${((c.mood+c.action+c.state)/3).toFixed(1)}</strong></span>
+            <span>気分 <strong>${esc(c.mood)}</strong></span>
+            <span>行動 <strong>${esc(c.action)}</strong></span>
+            <span>状態 <strong>${esc(c.state)}</strong></span>
+            <span style="color:#E8637A">平均 <strong>${((Number(c.mood)+Number(c.action)+Number(c.state))/3).toFixed(1)}</strong></span>
           </div>
-          ${c.note ? `<div class="checkin-note">"${c.note}"</div>` : ''}
+          ${c.note ? `<div class="checkin-note">${esc(c.note)}</div>` : ''}
         </div>
       `).join('');
+    }
+
+    function renderFeedHint(errors) {
+      const parts = [];
+      if (errors.work) parts.push('ワーク一覧: <code>work_answers</code> の読み取り権限（管理者用 RLS）を確認してください。supabase-setup-v2.sql の admin ポリシーが有効か見直しください。');
+      if (errors.memo) parts.push('講義メモ: <code>question_memos</code> テーブルと管理者用 SELECT ポリシー（v3）を確認してください。');
+      if (errors.diary) parts.push('復縁日記: <code>diary_entries</code> テーブルが無い、または管理者用 SELECT ポリシー（v3）が未設定の可能性があります。');
+      const hint = document.getElementById('feed-hint-box');
+      if (parts.length === 0) {
+        hint.innerHTML = '';
+        return;
+      }
+      hint.innerHTML = '<div class="feed-hint">一部のデータが読み込めませんでした。<br>' + parts.join('<br>') + '<br>講義視聴ログを一覧に載せる場合は、リポジトリ内 <code>supabase/sql/admin_feed_rls_lecture_views.sql</code> を SQL Editor で実行してください。</div>';
+    }
+
+    function bindFeedTabs() {
+      document.getElementById('feed-tabs').addEventListener('click', (e) => {
+        const btn = e.target.closest('.feed-tab');
+        if (!btn) return;
+        const tab = btn.dataset.tab;
+        document.querySelectorAll('.feed-tab').forEach(b => b.classList.toggle('active', b === btn));
+        document.querySelectorAll('.feed-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById('panel-' + tab).classList.add('active');
+      });
     }
 
     (async () => {
@@ -230,16 +378,108 @@
       }
 
       document.getElementById('admin-content').style.display = 'block';
+      bindFeedTabs();
 
-      // 全プロフィール取得
       const { data: profiles } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
-      // 全チェックイン取得
-      const { data: allCheckins } = await sb.from('checkins').select('*');
+      const { data: allCheckins } = await sb.from('checkins').select('*').order('date', { ascending: false }).limit(2000);
+
+      const profileMap = Object.fromEntries((profiles || []).map(p => [p.id, p]));
+
+      const [waRes, meRes, diRes] = await Promise.all([
+        sb.from('work_answers').select('*').order('updated_at', { ascending: false }).limit(500),
+        sb.from('question_memos').select('*').order('created_at', { ascending: false }).limit(300),
+        sb.from('diary_entries').select('*').order('date', { ascending: false }).limit(300),
+      ]);
+
+      const feedErrors = {
+        work: !!(waRes.error),
+        memo: !!(meRes.error),
+        diary: !!(diRes.error),
+      };
+      renderFeedHint(feedErrors);
+
+      const sortedCheckins = [...(allCheckins || [])].sort((a, b) => {
+        const c = String(b.date).localeCompare(String(a.date));
+        if (c !== 0) return c;
+        const ea = (profileMap[a.user_id]?.email || '');
+        const eb = (profileMap[b.user_id]?.email || '');
+        return ea.localeCompare(eb);
+      });
+
+      const elCheckin = document.getElementById('panel-checkin');
+      if (!sortedCheckins.length) {
+        elCheckin.innerHTML = '<p class="no-data" style="padding:12px">チェックインの記録がありません</p>';
+      } else {
+        elCheckin.innerHTML = sortedCheckins.map(c => `
+          <div class="feed-card">
+            <div class="feed-meta">
+              <span><strong>日付</strong> ${esc(c.date)}</span>
+              <span><strong>会員</strong> ${memberLabel(profileMap, c.user_id)}</span>
+              <span><strong>気分/行動/状態</strong> ${esc(c.mood)} / ${esc(c.action)} / ${esc(c.state)}</span>
+            </div>
+            ${c.note ? `<div class="feed-body">${esc(c.note)}</div>` : '<div class="feed-body" style="color:#666">（メモなし）</div>'}
+          </div>
+        `).join('');
+      }
+
+      const elWork = document.getElementById('panel-work');
+      if (waRes.error || !waRes.data || waRes.data.length === 0) {
+        elWork.innerHTML = waRes.error
+          ? '<p class="no-data" style="padding:12px">ワーク回答を取得できません（権限またはテーブル未作成）。</p>'
+          : '<p class="no-data" style="padding:12px">ワーク回答の記録がありません</p>';
+      } else {
+        elWork.innerHTML = waRes.data.map(r => `
+          <div class="feed-card">
+            <div class="feed-title">${esc(lectureTitle(r.lecture_id))}</div>
+            <div class="feed-meta">
+              <span><strong>会員</strong> ${memberLabel(profileMap, r.user_id)}</span>
+              <span><strong>講義ID</strong> ${esc(r.lecture_id)}</span>
+              <span><strong>更新</strong> ${esc(r.updated_at || r.created_at || '')}</span>
+            </div>
+            <div class="feed-body">${esc(formatWorkAnswer(r.answer))}</div>
+          </div>
+        `).join('');
+      }
+
+      const elMemo = document.getElementById('panel-memo');
+      if (meRes.error || !meRes.data || meRes.data.length === 0) {
+        elMemo.innerHTML = meRes.error
+          ? '<p class="no-data" style="padding:12px">講義メモを取得できません。</p>'
+          : '<p class="no-data" style="padding:12px">講義メモはまだありません</p>';
+      } else {
+        elMemo.innerHTML = meRes.data.map(m => `
+          <div class="feed-card">
+            <div class="feed-title">${esc(lectureTitle(m.lecture_id))}</div>
+            <div class="feed-meta">
+              <span><strong>会員</strong> ${memberLabel(profileMap, m.user_id)}</span>
+              <span><strong>日時</strong> ${esc(m.created_at)}</span>
+            </div>
+            <div class="feed-body">${esc(m.question)}</div>
+          </div>
+        `).join('');
+      }
+
+      const elDiary = document.getElementById('panel-diary');
+      if (diRes.error || !diRes.data || diRes.data.length === 0) {
+        elDiary.innerHTML = diRes.error
+          ? '<p class="no-data" style="padding:12px">復縁日記を取得できません（テーブル未作成または権限）。</p>'
+          : '<p class="no-data" style="padding:12px">復縁日記の記録がありません</p>';
+      } else {
+        elDiary.innerHTML = diRes.data.map(d => `
+          <div class="feed-card">
+            <div class="feed-meta">
+              <span><strong>日付</strong> ${esc(d.date)}</span>
+              <span><strong>会員</strong> ${memberLabel(profileMap, d.user_id)}</span>
+              <span><strong>更新</strong> ${esc(d.updated_at || d.created_at || '')}</span>
+            </div>
+            <div class="feed-body">${esc(d.content)}</div>
+          </div>
+        `).join('');
+      }
 
       const total = profiles ? profiles.length : 0;
       document.getElementById('total-members').textContent = total;
 
-      // 今日・今週のアクティブ数
       const today = new Date();
       const todayStr = getDateStr(today);
       const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 6);
@@ -250,14 +490,12 @@
       document.getElementById('active-today').textContent = todayActive;
       document.getElementById('active-week').textContent = weekActive;
 
-      // 今週平均スコア
       const weekCheckins = allCheckins?.filter(c => c.date >= weekAgoStr) || [];
       if (weekCheckins.length > 0) {
-        const avg = weekCheckins.reduce((sum, c) => sum + (c.mood + c.action + c.state) / 3, 0) / weekCheckins.length;
+        const avg = weekCheckins.reduce((sum, c) => sum + (Number(c.mood) + Number(c.action) + Number(c.state)) / 3, 0) / weekCheckins.length;
         document.getElementById('avg-score').textContent = avg.toFixed(1);
       }
 
-      // ゴール別
       const goalCounts = { reconnect: 0, next_love: 0, closure: 0 };
       profiles?.forEach(p => { if (p.goal) goalCounts[p.goal]++; });
       const maxGoal = Math.max(...Object.values(goalCounts), 1);
@@ -266,8 +504,13 @@
         document.getElementById('bar-' + goal).style.width = (count / maxGoal * 100) + '%';
       });
 
-      // 会員テーブル
       const tbody = document.getElementById('member-table');
+      tbody.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-detail]');
+        if (!btn) return;
+        showMemberDetail(btn.dataset.userId, btn.dataset.userName || '名前なし');
+      });
+
       if (!profiles || profiles.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" class="no-data" style="padding:20px">会員がいません</td></tr>';
         return;
@@ -276,21 +519,22 @@
       tbody.innerHTML = profiles.map(p => {
         const memberCheckins = allCheckins?.filter(c => c.user_id === p.id) || [];
         const checkinCount = memberCheckins.length;
-        const lastCheckin = memberCheckins.sort((a, b) => b.date.localeCompare(a.date))[0];
+        const lastCheckin = [...memberCheckins].sort((a, b) => String(b.date).localeCompare(String(a.date)))[0];
         const avgScore = checkinCount > 0
-          ? (memberCheckins.reduce((sum, c) => sum + (c.mood + c.action + c.state) / 3, 0) / checkinCount).toFixed(1)
+          ? (memberCheckins.reduce((sum, c) => sum + (Number(c.mood) + Number(c.action) + Number(c.state)) / 3, 0) / checkinCount).toFixed(1)
           : '-';
         const regDate = new Date(p.created_at).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
+        const dispName = (p.name || '名前なし').trim();
 
         return `
           <tr>
-            <td>${p.name || '-'}</td>
-            <td>${p.goal ? `<span class="goal-tag ${GOAL_CLASSES[p.goal]}">${GOAL_LABELS[p.goal]}</span>` : '<span class="no-data">未設定</span>'}</td>
-            <td>${regDate}</td>
+            <td>${esc(p.name || '-')}</td>
+            <td>${p.goal ? `<span class="goal-tag ${GOAL_CLASSES[p.goal]}">${esc(GOAL_LABELS[p.goal])}</span>` : '<span class="no-data">未設定</span>'}</td>
+            <td>${esc(regDate)}</td>
             <td>${checkinCount}回</td>
-            <td>${lastCheckin ? lastCheckin.date : '<span class="no-data">なし</span>'}</td>
-            <td>${avgScore}</td>
-            <td><button onclick="showMemberDetail('${p.id}','${p.name||'名前なし'}')" style="background:#2A2A2A;color:#aaa;border:none;padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer">詳細</button></td>
+            <td>${lastCheckin ? esc(lastCheckin.date) : '<span class="no-data">なし</span>'}</td>
+            <td>${esc(avgScore)}</td>
+            <td><button type="button" data-detail data-user-id="${escAttr(p.id)}" data-user-name="${escAttr(dispName)}" style="background:#2A2A2A;color:#aaa;border:none;padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer">詳細</button></td>
           </tr>
         `;
       }).join('');
