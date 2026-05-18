@@ -1,0 +1,7 @@
+# Supabase CLI 用（Edge Functions のデプロイ・設定）
+# プロジェクト参照: ダッシュボードの URL（...supabase.co の直前）と一致させます
+project_id = "ejcajjtptbrcwmgzqhjz"
+
+# Database Webhook から呼ぶとき JWT が付かないため、この関数だけ検証をオフにします
+[functions.notify-instructor]
+verify_jwt = false
